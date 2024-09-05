@@ -1,24 +1,10 @@
 local helpers = require "spec.helpers"
 local cjson = require "cjson"
-local inflate_gzip = require("kong.tools.gzip").inflate_gzip
 
 local PLUGIN_NAME = "ai-proxy"
 local MOCK_PORT = helpers.get_available_port()
 
 local openai_driver = require("kong.llm.drivers.openai")
-
-local function http2_client_get(host, port, path, request_body, headers)
-    local client = helpers.http2_client(host, port, true)
-
-    local response_body, response = client({
-      path = path,
-      body = request_body,
-      http_version ="HTTP/2.0",
-      headers = headers,
-    })
-
-    return tonumber(response.status), response, response_body
-end
 
 local format_stencils = {
   llm_v1_chat = {
@@ -258,14 +244,8 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
       proxy_port = helpers.get_proxy_port(true, true)
     end)
 
-    after_each(function()
-      if client then client:close() end
-    end)
-
-
     ---- TESTS
     describe("http2 returns response to client", function()
-      local status, headers
       it("200 from LLM", function()
         local client = helpers.http2_client(proxy_ip, proxy_port, true)
         local response_body, response = client({
