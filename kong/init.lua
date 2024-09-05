@@ -1228,7 +1228,6 @@ function Kong.access()
 
 
   if ctx.buffered_proxying then
-    local version = ngx.req.http_version()
     local upgrade = var.upstream_upgrade or ""
     if upgrade == "" then
       if has_timing then
