@@ -5,9 +5,9 @@ local pl_file = require "pl.file"
 local PLUGIN_NAME = "ai-proxy"
 local MOCK_PORT = helpers.get_available_port()
 
+for _, client_protocol in ipairs({ "http", "https", "http2" }) do
 for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
-  describe(PLUGIN_NAME .. ": (access) [#" .. strategy .. "]", function()
-    local client
+  describe(PLUGIN_NAME .. ": (access) [#" .. strategy .. "] [#" .. client_protocol .. "]", function()    local client
 
     lazy_setup(function()
       local bp = helpers.get_db_utils(strategy == "off" and "postgres" or strategy, nil, { PLUGIN_NAME })
@@ -390,7 +390,13 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
     end)
 
     before_each(function()
-      client = helpers.proxy_client()
+      if client_protocol == "http" then
+        client = helpers.proxy_client()
+      elseif client_protocol == "https" then
+        client = helpers.proxy_ssl_client()
+      elseif client_protocol == "http2" then
+        client = helpers.proxy_ssl_client(nil, nil, true)
+      end
     end)
 
     after_each(function()
@@ -444,7 +450,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         -- check this is in the 'kong' response format
         assert.equals(json.model, "command")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "cohere/command")
+        assert.equals(r.headers["x-kong-llm-model"], "cohere/command")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -470,7 +476,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         -- check this is in the 'kong' response format
         assert.equals(json.model, "command")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "cohere/command")
+        assert.equals(r.headers["x-kong-llm-model"], "cohere/command")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -514,7 +520,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         -- check this is in the 'kong' response format
         assert.equals(json.model, "command")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "cohere/command")
+        assert.equals(r.headers["x-kong-llm-model"], "cohere/command")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -540,7 +546,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         -- check this is in the 'kong' response format
         assert.equals(json.model, "command")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "cohere/command")
+        assert.equals(r.headers["x-kong-llm-model"], "cohere/command")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -624,3 +630,4 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
   end)
 
 end end
+end

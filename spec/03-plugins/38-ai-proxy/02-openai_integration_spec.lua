@@ -62,8 +62,9 @@ local _EXPECTED_CHAT_STATS = {
   },
 }
 
+for _, client_protocol in ipairs({ "http", "https", "http2" }) do
 for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
-  describe(PLUGIN_NAME .. ": (access) [#" .. strategy .. "]", function()
+  describe(PLUGIN_NAME .. ": (access) [#" .. strategy .. "] [#" .. client_protocol .. "]", function()
     local client
 
     lazy_setup(function()
@@ -796,7 +797,13 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
     end)
 
     before_each(function()
-      client = helpers.proxy_client()
+      if client_protocol == "http" then
+        client = helpers.proxy_client()
+      elseif client_protocol == "https" then
+        client = helpers.proxy_ssl_client()
+      elseif client_protocol == "http2" then
+        client = helpers.proxy_ssl_client(nil, nil, true)
+      end
       -- Note: if file is removed instead of trunacted, file-log ends writing to a unlinked file handle
       truncate_file(FILE_LOG_PATH_STATS_ONLY)
       truncate_file(FILE_LOG_PATH_NO_LOGS)
@@ -1041,7 +1048,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "gpt-3.5-turbo-0613")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "openai/gpt-3.5-turbo")
+        assert.equals(r.headers["x-kong-llm-model"], "openai/gpt-3.5-turbo")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -1151,7 +1158,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "gpt-3.5-turbo-0613")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["X-Kong-LLM-Model"], "openai/try-to-override-the-model")
+        assert.equals(r.headers["x-kong-llm-model"], "openai/try-to-override-the-model")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -1647,3 +1654,4 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
   end)
 
 end end
+end

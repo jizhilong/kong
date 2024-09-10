@@ -409,7 +409,7 @@ local function proxy_client(timeout, forced_port, forced_ip, http2)
     proxy_ip = get_proxy_ip(false, true)
     proxy_port = get_proxy_port(false, true)
   end
-  ngx.log(ngx.ERR, "http_version: ", http_version)
+
   assert(proxy_ip, "No http-proxy found in the configuration")
   return http_client_opts({
     scheme = "http",
