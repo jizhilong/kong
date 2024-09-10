@@ -202,10 +202,7 @@ function resty_http_proxy_mt:send(opts, is_reopen)
     opts.path = opts.path .. "?" .. qs
     opts.query = nil
   end
-
-  ngx.log(ngx.ERR, "http version: ", self.options.http_version)
   if self.options.http_version and self.options.http_version == 2.0 then
-    ngx.log(ngx.ERR, "Using HTTP/2.0")
     local url = self.options.scheme .. "://" .. self.options.host .. ":" .. self.options.port .. opts.path
     local reqwest_opt = {
       version = 2,
@@ -222,7 +219,6 @@ function resty_http_proxy_mt:send(opts, is_reopen)
       status = res.status,
       headers = res.headers,
       read_body = function(self)
-        ngx.log(ngx.ERR, "res: ", cjson.encode(res))
         return res.body, nil
       end
     }
