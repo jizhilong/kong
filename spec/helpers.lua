@@ -27,6 +27,7 @@ local stress_generator = require "spec.fixtures.stress_generator"
 local lfs = require "lfs"
 local luassert = require "luassert.assert"
 local uuid = require("kong.tools.uuid").uuid
+local reqwest = require "reqwest"
 
 
 local reload_module = require("spec.details.module").reload
@@ -202,6 +203,31 @@ function resty_http_proxy_mt:send(opts, is_reopen)
     opts.query = nil
   end
 
+  ngx.log(ngx.ERR, "http version: ", self.options.http_version)
+  if self.options.http_version and self.options.http_version == 2.0 then
+    ngx.log(ngx.ERR, "Using HTTP/2.0")
+    local url = self.options.scheme .. "://" .. self.options.host .. ":" .. self.options.port .. opts.path
+    local reqwest_opt = {
+      version = 2,
+      method = opts.method,
+      body = opts.body,
+      headers = opts.headers,
+      tls_verify = false,
+    }
+    local res, err = reqwest.request(url, reqwest_opt)
+    if not res then
+      return nil, err
+    end
+    return {
+      status = res.status,
+      headers = res.headers,
+      read_body = function(self)
+        ngx.log(ngx.ERR, "res: ", cjson.encode(res))
+        return res.body, nil
+      end
+    }
+  end
+
   local res, err = self:request(opts)
   if res then
     -- wrap the read_body() so it caches the result and can be called multiple
@@ -238,6 +264,10 @@ function resty_http_proxy_mt:_connect()
     opts.connect_timeout = CONSTANTS.TEST_COVERAGE_TIMEOUT * 1000
     opts.send_timeout    = CONSTANTS.TEST_COVERAGE_TIMEOUT * 1000
     opts.read_timeout    = CONSTANTS.TEST_COVERAGE_TIMEOUT * 1000
+  end
+
+  if opts.http_version and opts.http_version == 2.0 then
+    return
   end
 
   local _, err = self:connect(opts)
@@ -374,15 +404,23 @@ end
 -- @param timeout (optional, number) the timeout to use
 -- @param forced_port (optional, number) if provided will override the port in
 -- the Kong configuration with this port
-local function proxy_client(timeout, forced_port, forced_ip)
+local function proxy_client(timeout, forced_port, forced_ip, http2)
   local proxy_ip = get_proxy_ip(false)
   local proxy_port = get_proxy_port(false)
+  local http_version
+  if http2 then
+    http_version = 2.0
+    proxy_ip = get_proxy_ip(false, true)
+    proxy_port = get_proxy_port(false, true)
+  end
+  ngx.log(ngx.ERR, "http_version: ", http_version)
   assert(proxy_ip, "No http-proxy found in the configuration")
   return http_client_opts({
     scheme = "http",
     host = forced_ip or proxy_ip,
     port = forced_port or proxy_port,
     timeout = timeout or 60000,
+    http_version = http_version,
   })
 end
 
@@ -391,9 +429,15 @@ end
 -- @function proxy_ssl_client
 -- @param timeout (optional, number) the timeout to use
 -- @param sni (optional, string) the sni to use
-local function proxy_ssl_client(timeout, sni)
+local function proxy_ssl_client(timeout, sni, http2)
   local proxy_ip = get_proxy_ip(true, true)
   local proxy_port = get_proxy_port(true, true)
+  local http_version
+  if http2 then
+    http_version = 2.0
+    proxy_ip = get_proxy_ip(true, true)
+    proxy_port = get_proxy_port(true, true)
+  end
   assert(proxy_ip, "No https-proxy found in the configuration")
   local client = http_client_opts({
     scheme = "https",
@@ -402,6 +446,7 @@ local function proxy_ssl_client(timeout, sni)
     timeout = timeout or 60000,
     ssl_verify = false,
     ssl_server_name = sni,
+    http_version = http_version,
   })
     return client
 end
@@ -2238,6 +2283,7 @@ end
   proxy_client_h2c = proxy_client_h2c,
   proxy_client_h2 = proxy_client_h2,
   admin_client = admin_client,
+  http_client_opts = http_client_opts,
   admin_gui_client = admin_gui_client,
   proxy_ssl_client = proxy_ssl_client,
   admin_ssl_client = admin_ssl_client,
