@@ -161,7 +161,7 @@ for _, strategy in helpers.each_strategy() do
         elseif client_protocol == "https" then
           proxy_client = helpers.proxy_ssl_client()
         elseif client_protocol == "http2" then
-          proxy_client = helpers.proxy_ssl_client(nil, nil, true)
+          proxy_client = helpers.proxy_ssl_client(nil, nil, 2)
         end
         proxy_ssl_client = helpers.proxy_ssl_client()
       end)

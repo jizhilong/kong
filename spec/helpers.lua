@@ -202,7 +202,7 @@ function resty_http_proxy_mt:send(opts, is_reopen)
     opts.path = opts.path .. "?" .. qs
     opts.query = nil
   end
-  if self.options.http_version and self.options.http_version == 2.0 then
+  if self.options.http_version and self.options.http_version == 2 then
     local url = self.options.scheme .. "://" .. self.options.host .. ":" .. self.options.port .. opts.path
     local reqwest_opt = {
       version = 2,
@@ -268,7 +268,7 @@ function resty_http_proxy_mt:_connect()
     opts.read_timeout    = CONSTANTS.TEST_COVERAGE_TIMEOUT * 1000
   end
 
-  if opts.http_version and opts.http_version == 2.0 then
+  if opts.http_version and opts.http_version == 2 then
     return
   end
 
@@ -406,12 +406,15 @@ end
 -- @param timeout (optional, number) the timeout to use
 -- @param forced_port (optional, number) if provided will override the port in
 -- the Kong configuration with this port
-local function proxy_client(timeout, forced_port, forced_ip, http2)
+-- @param forced_ip (optional, string) if provided will override the ip in
+-- the Kong configuration with this ip
+-- @param http_version (optional, number) the http version to use
+local function proxy_client(timeout, forced_port, forced_ip, http_version)
   local proxy_ip = get_proxy_ip(false)
   local proxy_port = get_proxy_port(false)
-  local http_version
-  if http2 then
-    http_version = 2.0
+  local ihttp_version
+  if http_version == 2 then
+    ihttp_version = 2
     proxy_ip = get_proxy_ip(false, true)
     proxy_port = get_proxy_port(false, true)
   end
@@ -422,7 +425,7 @@ local function proxy_client(timeout, forced_port, forced_ip, http2)
     host = forced_ip or proxy_ip,
     port = forced_port or proxy_port,
     timeout = timeout or 60000,
-    http_version = http_version,
+    http_version = ihttp_version,
   })
 end
 
@@ -431,12 +434,13 @@ end
 -- @function proxy_ssl_client
 -- @param timeout (optional, number) the timeout to use
 -- @param sni (optional, string) the sni to use
-local function proxy_ssl_client(timeout, sni, http2)
+-- @param http_version (optional, number) the http version to use
+local function proxy_ssl_client(timeout, sni, http_version)
   local proxy_ip = get_proxy_ip(true, true)
   local proxy_port = get_proxy_port(true, true)
-  local http_version
-  if http2 then
-    http_version = 2.0
+  local ihttp_version
+  if http_version == 2 then
+    ihttp_version = 2
     proxy_ip = get_proxy_ip(true, true)
     proxy_port = get_proxy_port(true, true)
   end
@@ -448,7 +452,7 @@ local function proxy_ssl_client(timeout, sni, http2)
     timeout = timeout or 60000,
     ssl_verify = false,
     ssl_server_name = sni,
-    http_version = http_version,
+    http_version = ihttp_version,
   })
     return client
 end

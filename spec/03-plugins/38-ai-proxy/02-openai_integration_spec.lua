@@ -802,7 +802,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
       elseif client_protocol == "https" then
         client = helpers.proxy_ssl_client()
       elseif client_protocol == "http2" then
-        client = helpers.proxy_ssl_client(nil, nil, true)
+        client = helpers.proxy_ssl_client(nil, nil, 2)
       end
       -- Note: if file is removed instead of trunacted, file-log ends writing to a unlinked file handle
       truncate_file(FILE_LOG_PATH_STATS_ONLY)
