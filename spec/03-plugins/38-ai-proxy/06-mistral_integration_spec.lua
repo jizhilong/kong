@@ -375,7 +375,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "mistralai/Mistral-7B-Instruct-v0.1-instruct")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["x-kong-llm-model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
+        assert.equals(r.headers["X-Kong-LLM-Model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -404,7 +404,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "mistralai/Mistral-7B-Instruct-v0.1-instruct")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["x-kong-llm-model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
+        assert.equals(r.headers["X-Kong-LLM-Model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -453,7 +453,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "mistralai/Mistral-7B-Instruct-v0.1-instruct")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["x-kong-llm-model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
+        assert.equals(r.headers["X-Kong-LLM-Model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)
@@ -481,7 +481,7 @@ for _, strategy in helpers.all_strategies() do if strategy ~= "cassandra" then
         assert.equals(json.id, "chatcmpl-8T6YwgvjQVVnGbJ2w8hpOA17SeNy2")
         assert.equals(json.model, "mistralai/Mistral-7B-Instruct-v0.1-instruct")
         assert.equals(json.object, "chat.completion")
-        assert.equals(r.headers["x-kong-llm-model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
+        assert.equals(r.headers["X-Kong-LLM-Model"], "mistral/mistralai/Mistral-7B-Instruct-v0.1-instruct")
 
         assert.is_table(json.choices)
         assert.is_table(json.choices[1].message)

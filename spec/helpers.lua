@@ -215,10 +215,16 @@ function resty_http_proxy_mt:send(opts, is_reopen)
     if not res then
       return nil, err
     end
+    local headers_mt = {
+      __index = function(t, k)
+        return rawget(t, string.lower(k))
+      end
+    }
+    local res_headers = setmetatable(res.headers, headers_mt)
     return {
       status = res.status,
-      headers = res.headers,
-      read_body = function(self)
+      headers = res_headers,
+      read_body = function()
         return res.body, nil
       end
     }
