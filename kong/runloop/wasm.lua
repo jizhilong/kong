@@ -402,6 +402,8 @@ local function rebuild_state(db, version, old_state)
 
       for _, filter in ipairs(chain.filters) do
         if filter.enabled then
+          _M.filters_by_name[filter.name].config = cjson_decode(filter.config) or filter.config
+
           -- Serialize all JSON configurations up front
           --
           -- NOTE: there is a subtle difference between a raw, non-JSON filter
@@ -415,6 +417,7 @@ local function rebuild_state(db, version, old_state)
           if filter.config ~= nil and type(filter.config) ~= "string" then
             filter.config = cjson_encode(filter.config)
           end
+
         end
       end
 
@@ -778,12 +781,26 @@ local function register_property_handlers()
     return ok, value, const
   end)
 
+  properties.add_getter("kong.route_name", function(_, _, ctx)
+    local value = ctx.route and ctx.route.name
+    local ok = value ~= nil
+    local const = ok
+    return ok, value, const
+  end)
+
   properties.add_getter("kong.service.response.status", function(kong)
     return true, kong.service.response.get_status(), false
   end)
 
   properties.add_getter("kong.service_id", function(_, _, ctx)
     local value = ctx.service and ctx.service.id
+    local ok = value ~= nil
+    local const = ok
+    return ok, value, const
+  end)
+
+  properties.add_getter("kong.service_name", function(_, _, ctx)
+    local value = ctx.service and ctx.service.name
     local ok = value ~= nil
     local const = ok
     return ok, value, const

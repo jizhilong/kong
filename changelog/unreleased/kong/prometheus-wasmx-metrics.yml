@@ -1,0 +1,3 @@
+message: Expose WasmX metrics as part of the Prometheus plugin
+type: feature
+scope: Plugin

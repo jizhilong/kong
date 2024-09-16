@@ -7,20 +7,56 @@ use crate::test_http::*;
 use crate::types::*;
 use http::StatusCode;
 use log::*;
+use proxy_wasm::hostcalls::*;
 use proxy_wasm::traits::*;
 use proxy_wasm::types::*;
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::time::Duration;
 
 proxy_wasm::main! {{
    proxy_wasm::set_log_level(LogLevel::Info);
    proxy_wasm::set_root_context(|_| -> Box<dyn RootContext> {
-       Box::new(TestRoot { config: None })
+       Box::new(TestRoot { config: None, metrics: HashMap::new() })
    });
 }}
 
 struct TestRoot {
     config: Option<TestConfig>,
+    metrics: HashMap<String, u32>,
+}
+
+impl TestRoot {
+    fn get_config(&self, name: &str) -> Option<&str> {
+        match &self.config {
+            Some(config) => config.map.get(name).map(|s| s.as_str()),
+            None => None,
+        }
+    }
+
+    fn define_metrics(&mut self) {
+        let config = self.get_config("metrics").map_or("c1,g1,h1".to_string(), |x| x.to_string());
+
+        for metric in config.split(",") {
+            let metric_char = metric.chars().nth(0).unwrap();
+            let metric_type = match metric_char {
+                'c' => MetricType::Counter,
+                'g' => MetricType::Gauge,
+                'h' => MetricType::Histogram,
+                _ => panic!("unexpected metric type"),
+            };
+            let n = metric[1..].parse::<u64>().expect("bad metrics value");
+
+            for i in 1..(n + 1) {
+                let name = format!("{}{}", metric_char, i);
+                let m_id = define_metric(metric_type, &name).expect("cannot define new metric");
+
+                info!("defined metric {} as {:?}", &name, m_id);
+
+                self.metrics.insert(name, m_id);
+            }
+        }
+    }
 }
 
 impl Context for TestRoot {}
@@ -44,6 +80,8 @@ impl RootContext for TestRoot {
 
                 self.set_tick_period(Duration::from_millis(ms));
             }
+
+            self.define_metrics();
         }
 
         true
